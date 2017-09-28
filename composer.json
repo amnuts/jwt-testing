@@ -1,0 +1,9 @@
+{
+    "require": {
+        "fzaninotto/Faker": "^1.7",
+        "lcobucci/jwt": "^3.2"
+    },
+    "require-dev": {
+        "kint-php/kint": "^2.2"
+    }
+}
