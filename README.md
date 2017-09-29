@@ -10,7 +10,7 @@ php -S localhost:9003 ws.php
 
 Then just access http://localhost:9001 to test it out.
 
-If you want to test out on different servers, change the `config.php` file.
+If you want to use different servers or ports, change the `config.php` file so that it matches where you have located the three different services.
 
 ### To generate keys
 
