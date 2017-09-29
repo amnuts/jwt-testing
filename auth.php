@@ -4,13 +4,15 @@ namespace Demo;
 
 require __DIR__.'/vendor/autoload.php';
 
-use Lcobucci\JWT\Signer\Rsa\Sha256;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Builder;
 
+$signer = include __DIR__ . '/signer.php';
 $config = include __DIR__ . '/config.php';
+
 $faker = \Faker\Factory::create('en_GB');
-$token = (new Builder())->setId(1)
+$token = (new Builder())
     ->setAudience('http://client.service.dev')
     ->setIssuer('http://auth.service.dev')
     ->setId(uniqid())
@@ -27,7 +29,7 @@ $token = (new Builder())->setId(1)
         ]
     ])
     ->setHeader('test', '1234')
-    ->sign(new Sha256(), new Key('file://./jwt-key'))
+    ->sign(new Sha256(), new Key($signer['hmac']))
     ->getToken();
 
 header('refresh:30;url=' . $config['url']['client'] . '/?token=' . (string)$token);

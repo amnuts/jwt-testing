@@ -5,12 +5,15 @@ namespace Demo;
 require __DIR__.'/vendor/autoload.php';
 
 use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
+
+$signer = include __DIR__ . '/signer.php';
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, HEAD, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept');
+header('Content-type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
@@ -18,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $unauthd = function() {
     header('HTTP/1.0 401 Unauthorized');
+    echo json_encode(['error' => 'unauthorized access']);
     exit;
 };
 
@@ -37,26 +41,32 @@ try {
 } catch (\Exception $e) {}
 
 $alg = new Sha256();
-$key = new Key('file://./jwt-key.pub');
+$key = new Key($signer['hmac']);
 
 if (empty($token) || !$token->verify($alg, $key)) {
     $unauthd();
 }
 
+$response = null;
 switch ($_GET['get']) {
     case 'valid':
-        var_dump($token->verify($alg, $key));
+        $response = var_export($token->verify($alg, $key), true);
         break;
     case 'issuer':
-        echo $token->getClaim('iss');
+        $response = $token->getClaim('iss');
         break;
     case 'author':
-        echo $token->getClaim('user')->author_id;
+        $response = $token->getClaim('user')->author_id;
         break;
     case 'email':
-        echo $token->getClaim('user')->email;
+        $response = $token->getClaim('user')->email;
         break;
     default:
-        echo json_encode($token->getClaims());
+        $response = $token->getClaims();
         break;
 }
+
+echo json_encode(['response' => $response, 'token' => (string)$token]);
+
+
+

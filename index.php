@@ -5,7 +5,7 @@ namespace Demo;
 require __DIR__.'/vendor/autoload.php';
 
 use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key;
 
 $config = include __DIR__ . '/config.php';
@@ -18,7 +18,6 @@ if (!empty($_GET['token'])) {
         $error = $e->getMessage();
     }
 }
-
 
 ?>
 <!doctype html>
@@ -33,9 +32,7 @@ if (!empty($_GET['token'])) {
 </head>
 <body>
 
-<?php
-
-if (empty($token) || !$token->verify(new Sha256(), new Key('file://./jwt-key.pub'))): ?>
+<?php if (!$token instanceof \Lcobucci\JWT\Token): ?>
     <p><a href="<?php echo $config['url']['auth']; ?>">Login with auth provider</a>
     <?php if (!empty($error)): ?>
         <p>Looks like you have a token but it cannot be parsed, the reason being <?php echo $error; ?></p>
@@ -74,11 +71,21 @@ if (empty($token) || !$token->verify(new Sha256(), new Key('file://./jwt-key.pub
             var $id = $(this).attr('id');
             $.ajax({
                 url: '<?php echo $config['url']['ws']; ?>/?get=' + $(this).attr('href'),
+                dataType: 'json',
                 beforeSend: function(xhr){
                     xhr.setRequestHeader('Authorization', 'Bearer ' + ($id == 'test-fake' ? $fakeToken : $token));
                 },
                 success: function(d) {
-                    $('#' + $id + '-response').html(d);
+                    if (d.hasOwnProperty('token') && d.token !== '') {
+                        $token = d.token;
+                        if (d.hasOwnProperty(('response'))) {
+                            $('#' + $id + '-response').html(d.response);
+                        }
+                    }
+                },
+                error: function(d) {
+                    $token = null;
+                    location.href = '<?php echo $config['url']['client']; ?>';
                 },
                 crossDomain: true
             });
